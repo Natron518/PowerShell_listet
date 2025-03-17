@@ -26,28 +26,49 @@ do {
     $wahl = Read-Host "Ihre Wahl: "
 
     switch ($wahl) {
-        0 {Write-Host "Das Skript wird beendet"}
+        0 {
+            Write-Host "Das Skript wird beendet." -ForegroundColor Red
+            break}
 
         1 {
-            $path = Read-Host "Geben Sie den Pfad und den Namen der neuen Datei ein (ohne Dateiendung): "
-            New-Item -Path "$path.txt" -ItemType "file"
+            $path = Read-Host "Geben Sie den Pfad und den Namen der neuen Datei ein (ohne Dateiendung .txt): "
+            try{
+                New-Item -Path "$path.txt" -ItemType "file" -ErrorAction Stop
+                Write-Host "Wurde erfolgreich erstellt: $path.txt" -ForegroundColor Green
+            } catch{
+                Write-Host "---- Error: Die Datei konnte nicht erstellt werden. ----" -ForegroundColor Red
+            }
         }
 
         2 {
-            $path = Read-Host "Geben Sie den Pfad und den Namen der zu löschenden Datei ein (ohne Dateiendung): "
-            Remove-Item "$path.txt"
+            $path = Read-Host "Geben Sie den Pfad und den Namen der zu löschenden Datei ein (ohne Dateiendung .txt): "
+            if(Test-Path "$path.txt") {
+                Remove-Item "$path.txt"
+                Write-Host "Datei gelöscht: $path.txt" -ForegroundColor Green
+            } else{
+                Write-Host "Fehler: Datei existiert nicht!" -ForegroundColor Red
+            }
+     
         }
 
         3 {
-            $text = Read-Host "Geben Sie den Text ein, der in die Datei geschrieben werden soll: "
-            $path = Read-Host "Geben Sie den Pfad und den Namen der Datei an, in die der Text geschrieben werden soll: "
-            $text | Out-File -FilePath "$path.txt" -Append
-        }
+           $path = Read-Host "Geben Sie den Pfad und den Namen der Datei an, in die der Text geschrieben werden soll: "
+            if(Test-Path "$path.txt"){}
+                $text = Read-Host "Geben Sie den Text ein"
+                $text | Out-File -FilePath "$path.txt" -Append
+                Write-Host "Text wurde in die Datei geschrieben." -ForegroundColor Green
+            } else{ 
+                Write-Host "Fehler: Datei existiert nicht!" -ForegroundColor Red
+            }
 
         4 {
             $path = Read-Host "Geben Sie den Pfad und den Namen der zu lesenden Datei ein: "
-            $inhalt = Get-Content $path
-            Write-Host $inhalt
+            if(Test-Path $path){
+                 Get-Content $path | ForEach-Object { Write-Host $_ }
+            }else {
+                Write-Host "Fehler: Datei existiert nicht!" -ForegroundColor Red
+            }
+           
         }
 
         5 {
@@ -91,78 +112,28 @@ do {
         }
 
         12 {
-            function geldBetrag {
-                do {
-                    $betrag = Read-Host "Für welchen Betrag wollen Sie die Zinserträge berechnen?"
-                    if ($betrag -le 0) {
-                        Write-Host "Der eingegebene Betrag muss größer als Null sein!"
-                    } else {
-                        $betrag
-                    }
-                } while ($betrag -le 0)
-            }
-            
-            function zinsSatz {
-                do {
-                    $zins = Read-Host "Mit welchem Zinssatz soll gerechnet werden?"
-                    if ($zins -le 0) {
-                        Write-Host "Der eingegebene Zinssatz muss größer als Null sein!"
-                    } else {
-                        $zins
-                    }
-                } while ($zins -le 0)
-            }
-    
-            function berechnung {
-                param($betrag, $zins)
+            function berechne-Zinsen {
+                param([double]$betrag, [double]$zins)
                 $zins = $zins / 100 + 1 
-                Write-Host "Startbetrag: $betrag"
-                Write-Host "Zinssatz: $zins"
+                Write-Host "Startbetrag: $betrag€"
+                Write-Host "Jährlicher Zinssatz: $zins%"
                 Write-Host "Entwicklung des Betrags über 10 Jahre:"
                 for ($i = 1; $i -le 10; $i++) {
-                    [double]$betrag = $betrag * $zins
-                    Write-Host "Jahr $i : $betrag"
+                    $betrag = [math]::Round($betrag * $zins, 2)
+                    Write-Host "Jahr $i : $betrag€"
                 }
             }
 
-            do {
-                Write-Host "Das Skript berechnet die Entwicklung eines Geldbetrags über 10 Jahre bei einem fixen Zinssatz"
-                $betrag = geldBetrag
-                $zins = zinsSatz
-                berechnung -betrag $betrag -zins $zins
-                $wieder = Read-Host "Wollen Sie noch eine Berechnung machen? (1 --> ja)"
-            } while ($wieder -eq 1)
+            $betrag = Read-Host "Startbetrag (€)"
+            $zins = Read-Host "Zinssatz (%)"
+            if ([double]$betrag -gt 0 -and [double]$zins -gt 0) {
+                berechne-Zinsen -betrag $betrag -zins $zins
+            } else {
+                Write-Host "Fehler: Betrag und Zinssatz müssen größer als 0 sein!" -ForegroundColor Red
+            }
         }
         
         13 {
-            function Eingabe-Zahl {
-                $zahl = Read-Host "Geben Sie eine Zahl ein"
-                return $zahl
-            }
-    
-            function Get-Addition {
-                param ([double]$zahl1, [double]$zahl2)
-                $result = $zahl1 + $zahl2
-                Write-Host "Das Resultat der Addition von $zahl1 und $zahl2 ist $result."
-            }
-    
-            function Get-Division {
-                param ($zahl1, $zahl2)
-                $result = $zahl1 / $zahl2
-                Write-Host "Das Resultat der Division von $zahl1 durch $zahl2 ist $result."
-            }
-
-            function Get-Multiplikation {
-                param ([double]$zahl1, [double]$zahl2)
-                $result = $zahl1 * $zahl2
-                Write-Host "Das Resultat der Multiplikation von $zahl1 mit $zahl2 ist $result."
-            }
-
-            function Get-Subtraktion {
-                param ($zahl1, $zahl2)
-                $result = $zahl1 - $zahl2
-                Write-Host "Das Resultat der Subtraktion von $zahl1 minus $zahl2 ist $result."
-            }
 
             function Get-Anweisung {
                 Write-Host "Wählen Sie zwischen den 4 Grundrechenoperationen:"
@@ -170,69 +141,55 @@ do {
                 Write-Host "2) Subtraktion"
                 Write-Host "3) Multiplikation"
                 Write-Host "4) Division"
-                Write-Host "0) Skript beenden"
+                Write-Host "0) zurück"
+            }
+
+            function Eingabe-Zahl {
+                $zahl = Read-Host "Geben Sie eine Zahl ein"
+                return $zahl
             }
     
-            do {
+             do {
                 Get-Anweisung
                 $wahl = Read-Host "Geben Sie Ihre Wahl ein: "
                 if ($wahl -ne 0) {
-                    Write-Host "Erste Zahl"
-                    $zahl1 = Eingabe-Zahl
-                    Write-Host "Zweite Zahl"
-                    $zahl2 = Eingabe-Zahl
+                    [double]$zahl1 = Read-Host "Geben Sie die erste Zahl ein"
+                    [double]$zahl2 = Read-Host "Geben Sie die zweite Zahl ein"
                 }
                 switch ($wahl) {
-                    0 {Write-Host "Das Skript wird beendet"}
-                    1 {Get-Addition $zahl1 $zahl2}
-                    2 {Get-Subtraktion $zahl1 $zahl2}
-                    3 {Get-Multiplikation $zahl1 $zahl2}
-                    4 {Get-Division $zahl1 $zahl2}
+                    0 {Write-Host "Das Skript wird beendet" -ForegroundColor Red}
+                    1 {Write-Host "Ergebnis:  $($zahl1 + $zahl2)"}
+                    2 {Write-Host "Ergebnis:  $($zahl1 - $zahl2)"}
+                    3 {Write-Host "Ergebnis:  $($zahl1 * $zahl2)"}
+                    4 {if ($zahl2 -eq 0){ Write-Host "Fehler: Division Error-" -ForegroundColor Red}
+                    else{
+                        Write-Host "Ergebnis:  $($zahl1 / $zahl2)"}
+                    }
                 }
             } while ($wahl -ne 0)
         }
-    
+
         14 {
-            function erzeuge-Zufallszahl {
-                $zzahl = Get-Random -Minimum 1 -Maximum 50   
-                return $zzahl
-            }
-            
-            function rate-Zufallszahl {
-                Write-Host "Gesucht ist eine Zahl zwischen 1 und 50"
-                $rzahl = Read-Host "Geben Sie Ihren Tipp ein: "
-                while ($rzahl -lt 1 -or $rzahl -gt 50) {
-                    Write-Host "Ungültige Eingabe!"
-                    $rzahl = Read-Host "Geben Sie einen neuen Tipp ein: "
-                }
-                return $rzahl
-            }
-    
-            function vergleiche-Zahlen($zuzahl) {
-                $zaehler = 0
+            function rate-Spiel {
+                $zufallszahl = Get-Random -Minimum 1 -Maximum 50
+                Write-Host "Errate die Zahl zwischen 1 und 50!"
+                $versuche = 0
+
                 do {
-                    $razahl = rate-Zufallszahl
-                    $zaehler++
-    
-                    if ($zuzahl -lt $razahl) {
-                        Write-Host "Die gesuchte Zahl ist kleiner als $razahl"
-                    } elseif ($zuzahl -gt $razahl) {
-                        Write-Host "Die gesuchte Zahl ist größer als $razahl"
+                    [int]$tipp = Read-Host "Ihr Tipp"
+                    $versuche++
+
+                    if ($tipp -lt $zufallszahl) {
+                        Write-Host "Die gesuchte Zahl ist größer." -ForegroundColor Yellow
+                    } elseif ($tipp -gt $zufallszahl) {
+                        Write-Host "Die gesuchte Zahl ist kleiner." -ForegroundColor Yellow
                     } else {
-                        Write-Host "Gratulation, Sie haben richtig geraten. Sie haben $zaehler Versuche gebraucht."
+                        Write-Host "Richtig! Sie haben die Zahl in $versuche Versuchen erraten!" -ForegroundColor Green
                     }
-                } while ($zuzahl -ne $razahl)
-            }
-            
-            function wiederhole-Spiel {
-                do {
-                    $zufzahl = erzeuge-Zufallszahl
-                    vergleiche-Zahlen -zuzahl $zufzahl
-                    $nochmal = Read-Host "Wollen Sie nochmals spielen? 1 --> ja, 2 --> nein"
-                } while ($nochmal -eq 1)
+                } while ($tipp -ne $zufallszahl)
             }
 
-            wiederhole-Spiel
+            rate-Spiel
         }
 
         15 {
